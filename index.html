@@ -1,0 +1,203 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="X-UA-Compatible" content="ie=edge">
+    <title>Document</title>
+</head>
+
+<body>
+    <button id="start_btn">Start</button>
+    <button id="stop_btn">Stop</button>
+    <button id="rand_btn">Random</button>
+    <button id="reset_btn">Reset</button>
+    <br>
+    <canvas id="cnv"></canvas>
+</body>
+<script>
+    const canvas = document.getElementById('cnv'),
+        canvasLeft = canvas.offsetLeft,
+        canvasTop = canvas.offsetTop,
+        context = canvas.getContext('2d'),
+        height = 500, //set height of canvas
+        width = 1000, //set width of canvas
+        pHeight = 5,
+        pWidth = 5,
+        columns = width / pWidth,
+        rows = height / pHeight;
+    var gen = new Array();
+    var newGen = new Array();
+    const timeTicks = 1000 / 24; //set time ticks per second 1000/desired ticks;
+    var refreshIntervalId;
+    var running = false;
+
+    init = function () {
+
+        canvas.height = height;
+        canvas.width = width;
+
+        draw();
+
+        for (let i = 0; i < width / pWidth; i++) {
+            gen[i] = new Array();
+            newGen[i] = new Array();
+            for (let j = 0; j < height / pHeight; j++) {
+                gen[i][j] = 0;
+                newGen[i][j] = 0;
+            }
+        }
+
+        canvas.addEventListener('click', function (e) {
+            var x = Math.floor((e.pageX - canvasLeft) / pWidth, 1),
+                y = Math.floor((e.pageY - canvasTop) / pHeight, 1);
+
+            gen[x][y] = 1;
+
+            draw();
+        });
+    };
+
+    //start button to start the simulation
+    startBtn = document.getElementById('start_btn');
+    startBtn.addEventListener("click", function () {
+        if (!running) {
+            refreshIntervalId = setInterval(tick, timeTicks);
+            running = true;
+        }
+    });
+
+    //stop simulation
+    stopBtn = document.getElementById('stop_btn');
+    stopBtn.addEventListener('click', function () {
+        if (refreshIntervalId) {
+            clearInterval(refreshIntervalId);
+            running = false;
+        }
+    });
+    //random generation button
+    randBtn = document.getElementById('rand_btn');
+    randBtn.addEventListener("click", function () {
+        generateRandom();
+    });
+
+    //reset simulation button
+    resetBtn = document.getElementById('reset_btn');
+    resetBtn.addEventListener('click', function () {
+        if (refreshIntervalId) {
+            clearInterval(refreshIntervalId);
+
+            for (let i = 0; i < width / pWidth; i++) {
+                gen[i] = new Array();
+                newGen[i] = new Array();
+                for (let j = 0; j < height / pHeight; j++) {
+                    gen[i][j] = 0;
+                    newGen[i][j] = 0;
+                }
+            }
+            running = false;
+            draw();
+        }
+    });
+
+    //populate first generation with random data
+    generateRandom = function () {
+        for (let i = 0; i < width / pWidth; i++) {
+            gen[i] = new Array();
+            newGen[i] = new Array();
+            for (let j = 0; j < height / pHeight; j++) {
+                gen[i][j] = Math.floor(Math.random() * 1.2);
+                newGen[i][j] = 0;
+            }
+        }
+        draw();
+    }
+
+    //main loop function
+    tick = function () {
+        generateNewGen();
+        draw();
+    }
+    //render view
+    draw = function () {
+        context.fillStyle = '#ff0000';
+        context.fillRect(0, 0, width, height);
+
+        if (gen.length) {
+            for (let x = 0; x < columns; x++) {
+                for (let y = 0; y < rows; y++) {
+                    if (gen[x][y] == 1) {
+                        context.fillStyle = '#ff69b4';
+                        context.fillRect(x * pWidth, y * pHeight, pWidth, pHeight);
+                    }
+                }
+            }
+        }
+    };
+
+    //@return cells state
+    function isAlive(column, row) {
+        return gen[column][row];
+    }
+
+    //@return number of alive neighbours around the cell
+    function aliveNeighbours(column, row) {
+        const cellsToCheck = [
+            [column - 1, row - 1],
+            [column, row - 1],
+            [column + 1, row - 1],
+            [column + 1, row],
+            [column + 1, row + 1],
+            [column, row + 1],
+            [column - 1, row + 1],
+            [column - 1, row]
+        ]
+
+        let numOfAliveNeighbours = 0,
+            checkX, checkY;
+        for (let i = 0; i < cellsToCheck.length; i++) {
+
+            checkX = cellsToCheck[i][0];
+            checkY = cellsToCheck[i][1];
+
+            if (checkX >= 0 && checkX < columns && checkY >= 0 && checkY < rows) {
+                numOfAliveNeighbours = (isAlive(checkX, checkY)) ? numOfAliveNeighbours + 1 : numOfAliveNeighbours;
+            }
+        }
+
+        return numOfAliveNeighbours;
+    }
+
+    //generates the upcoming generation
+    function generateNewGen() {
+        let numOfaliveNeighbours = 0;
+
+        for (let x = 0; x < columns; x++) {
+            for (let y = 0; y < rows; y++) {
+                numOfaliveNeighbours = aliveNeighbours(x, y);
+                if (isAlive(x, y)) {
+                    if (numOfaliveNeighbours === 2 || numOfaliveNeighbours === 3) {
+                        newGen[x][y] = 1;
+                    } else {
+                        newGen[x][y] = 0;
+                    }
+                } else if (numOfaliveNeighbours === 3) {
+                    newGen[x][y] = 1;
+                } else {
+                    newGen[x][y] = 0;
+                }
+            }
+        }
+
+        for (let x = 0; x < columns; x++) {
+            for (let y = 0; y < rows; y++) {
+                gen[x][y] = newGen[x][y];
+            }
+        }
+    }
+
+    init();
+</script>
+
+</html>
