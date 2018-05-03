@@ -121,14 +121,14 @@
     }
     //render view
     draw = function () {
-        context.fillStyle = '#ff0000';
+        context.fillStyle = '#000';
         context.fillRect(0, 0, width, height);
 
         if (gen.length) {
             for (let x = 0; x < columns; x++) {
                 for (let y = 0; y < rows; y++) {
                     if (gen[x][y] == 1) {
-                        context.fillStyle = '#ff69b4';
+                        context.fillStyle = '#0000ff';
                         context.fillRect(x * pWidth, y * pHeight, pWidth, pHeight);
                     }
                 }
